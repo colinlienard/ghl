@@ -4,12 +4,25 @@ mod config;
 use config::Config;
 mod git;
 use git::Git;
+mod github;
+use github::Github;
 
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
     let arg = if args.len() > 1 { &args[1] } else { "" };
     match arg {
+        "ok" => {
+            match Git::get_default_branch() {
+                Ok(v) => {
+                    println!("{}", v);
+                }
+                Err(e) => {
+                    eprintln!("{}", e.to_string().red());
+                }
+            };
+            return;
+        }
         "create" => {}
         "config" => {
             match Config::set_github_token() {
@@ -89,4 +102,7 @@ async fn main() {
             return;
         }
     };
+
+    let gh = Github::new(Config::get_github_token().unwrap().as_str());
+    let _ = Github::create_pr(gh, config).await;
 }

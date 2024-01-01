@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
+
+use crate::{config::Config, git::Git};
 
 pub struct Github {
     pub token: String,
@@ -10,18 +14,33 @@ impl Github {
         Self { token }
     }
 
-    // https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#create-a-pull-request
-    pub async fn create_pr(github: Github) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn create_pr(
+        github: Github,
+        config: Config,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let repo = Git::get_current_repo()?;
+        let default_desc = Config::get_default_desc()?;
+        let base = Git::get_default_branch()?;
+        // let draft = String::from("true");
+
+        let mut body = HashMap::new();
+        body.insert("title", &config.pr_name);
+        body.insert("head", &config.branch);
+        body.insert("base", &base);
+        body.insert("body", &default_desc);
+        // body.insert("draft", &draft);
+
         let client = reqwest::Client::new();
         let response = client
-            .get("https://api.github.com/repos/colinlienard/gitlight/branches")
+            .post("https://api.github.com/repos/".to_owned() + &repo + "/pulls")
+            .body(serde_json::to_string(&body)?)
             .headers(Github::construct_headers(github.token))
             .send()
             .await?;
 
         let text = response.text().await?;
         let json: serde_json::Value = serde_json::from_str(&text)?;
-        println!("{:#?}", json);
+        println!("{:#?}", json["html_url"]);
 
         Ok(())
     }

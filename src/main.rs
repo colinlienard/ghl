@@ -12,17 +12,6 @@ async fn main() {
     let args: Vec<String> = env::args().collect();
     let arg = if args.len() > 1 { &args[1] } else { "" };
     match arg {
-        "ok" => {
-            match Git::get_default_branch() {
-                Ok(v) => {
-                    println!("{}", v);
-                }
-                Err(e) => {
-                    eprintln!("{}", e.to_string().red());
-                }
-            };
-            return;
-        }
         "create" => {}
         "config" => {
             match Config::set_github_token() {
@@ -104,5 +93,39 @@ async fn main() {
     };
 
     let gh = Github::new(Config::get_github_token().unwrap().as_str());
-    let _ = Github::create_pr(gh, config).await;
+    let pr_url = match Github::create_pr(&gh, config).await {
+        Ok(url) => {
+            println!(
+                "{}",
+                "Successfully created the pull request.".bright_green()
+            );
+            url
+        }
+        Err(_) => {
+            eprintln!("An error occured");
+            process::exit(1);
+        }
+    };
+
+    let username = match Github::get_username(&gh).await {
+        Ok(username) => {
+            println!("{}", "Successfully get the current user.".bright_green());
+            username
+        }
+        Err(_) => {
+            eprintln!("An error occured");
+            process::exit(1);
+        }
+    };
+
+    let pr_number = pr_url.split("/").last().unwrap();
+    match Github::assign_to_pr(&gh, &username, pr_number).await {
+        Ok(_) => println!("{}", "Successfully assigned you.".bright_green()),
+        Err(_) => {
+            eprintln!("An error occured");
+            process::exit(1);
+        }
+    };
+
+    println!("{}", pr_url);
 }

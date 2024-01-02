@@ -15,9 +15,9 @@ impl Github {
     }
 
     pub async fn create_pr(
-        github: Github,
+        github: &Github,
         config: Config,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let repo = Git::get_current_repo()?;
         let default_desc = Config::get_default_desc()?;
         let base = Git::get_default_branch()?;
@@ -34,7 +34,37 @@ impl Github {
         let response = client
             .post("https://api.github.com/repos/".to_owned() + &repo + "/pulls")
             .body(serde_json::to_string(&body)?)
-            .headers(Github::construct_headers(github.token))
+            .headers(Github::construct_headers(&github.token))
+            .send()
+            .await?;
+
+        let text = response.text().await?;
+        let json: serde_json::Value = serde_json::from_str(&text)?;
+
+        Ok(json["html_url"].to_string())
+    }
+
+    pub async fn assign_to_pr(
+        github: &Github,
+        username: &str,
+        number: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let repo = Git::get_current_repo()?;
+
+        let mut body = HashMap::new();
+        body.insert("assignees", vec![username]);
+
+        let client = reqwest::Client::new();
+        let response = client
+            .post(
+                "https://api.github.com/repos/".to_owned()
+                    + &repo
+                    + "/issues/"
+                    + number
+                    + "/assignees",
+            )
+            .body(serde_json::to_string(&body)?)
+            .headers(Github::construct_headers(&github.token))
             .send()
             .await?;
 
@@ -45,7 +75,23 @@ impl Github {
         Ok(())
     }
 
-    fn construct_headers(token: String) -> HeaderMap {
+    pub async fn get_username(github: &Github) -> Result<String, Box<dyn std::error::Error>> {
+        let client = reqwest::Client::new();
+        let response = client
+            .get("https://api.github.com/user")
+            .headers(Github::construct_headers(&github.token))
+            .send()
+            .await?;
+
+        let text = response.text().await?;
+        println!("{:#?}", text);
+        let json: serde_json::Value = serde_json::from_str(&text)?;
+        println!("{:#?}", json);
+
+        Ok(json["login"].as_str().unwrap().to_string())
+    }
+
+    fn construct_headers(token: &String) -> HeaderMap {
         let mut headers = HeaderMap::new();
         if let Ok(header_value) = HeaderValue::from_str(&format!("Bearer {}", token.as_str())) {
             headers.insert(AUTHORIZATION, header_value);

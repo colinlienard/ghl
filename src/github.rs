@@ -85,9 +85,9 @@ impl Github {
         Ok(json["login"].as_str().unwrap().to_string())
     }
 
-    fn construct_headers(token: &String) -> HeaderMap {
+    fn construct_headers(token: &str) -> HeaderMap {
         let mut headers = HeaderMap::new();
-        if let Ok(header_value) = HeaderValue::from_str(&format!("Bearer {}", token.as_str())) {
+        if let Ok(header_value) = HeaderValue::from_str(&format!("Bearer {}", token)) {
             headers.insert(AUTHORIZATION, header_value);
         }
         headers.insert(

@@ -15,117 +15,123 @@ async fn main() {
         "create" => {}
         "config" => {
             match Config::set_github_token() {
-                Ok(_) => println!("{}", "Successfully set the token.".bright_green()),
+                Ok(set) => {
+                    if set {
+                        println!("{}", "✔️ Token set.".green())
+                    } else {
+                        println!("{}", "Skipped.".dimmed())
+                    }
+                }
                 Err(e) => {
                     eprintln!("{}", e.to_string().red());
                     return;
                 }
             };
             match Config::set_default_desc() {
-                Ok(_) => println!(
-                    "{}",
-                    "Successfully set the default pull request description.".bright_green()
-                ),
-                Err(e) => {
-                    eprintln!("{}", e.to_string().red());
+                Ok(set) => {
+                    if set {
+                        println!("{}", "✓ Default pull request description set.".green());
+                    } else {
+                        println!("{}", "Skipped.".dimmed());
+                    }
                 }
+                Err(e) => eprintln!("{}", e.to_string().red()),
             };
             return;
         }
         "help" | _ => {
-            println!("Usage: gitpr");
-            println!("       gitpr help");
-            println!("       gitpr version");
+            println!("{}", "Usage".bold());
+            println!("  snp [command]");
             println!("");
-            println!("Options:");
-            println!("  help     Display this message");
-            println!("  version  Display the version");
+            println!("{}", "Commands".bold());
+            println!("  help        Display this message.");
+            println!(
+                "  config      Set the GitHub token and the default pull request description."
+            );
+            println!("  create      Do the following:");
+            println!("                1. Create a new branch.");
+            println!("                2. Create a new commit.");
+            println!("                3. Push to the remote repository.");
+            println!("                4. Create a new pull request.");
+            println!("                5. Assign you the pull request.");
             return;
         }
     }
 
-    match Config::get_github_token() {
-        Ok(_) => {}
-        Err(_) => {
-            eprintln!("{}", "Please set the token with `snp config`.".bright_red());
-            return;
-        }
-    };
-
-    let config = Config::ask().unwrap_or_else(|_| {
-        eprintln!("An error occured");
+    let github_token = Config::get_github_token().unwrap_or_else(|_| {
+        eprintln!("Please set the token with `snp config`.");
         process::exit(1);
     });
 
-    match Config::confirm(&config).unwrap_or_else(|_| {
-        eprintln!("An error occured");
+    let config = Config::ask().unwrap_or_else(|e| {
+        eprintln!("{}", e.to_string());
+        process::exit(1);
+    });
+
+    match Config::confirm(&config).unwrap_or_else(|e| {
+        eprintln!("{}", e.to_string());
         process::exit(1);
     }) {
         true => {}
-        false => {
-            println!("{}", "Successfully aborted.".bright_green());
-            return;
-        }
+        false => return,
     }
 
     match Git::create_branch(&config.branch) {
-        Ok(_) => println!("{}", "Successfully created the branch.".bright_green()),
+        Ok(_) => println!("{}", "✔️ Branch created.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string().red());
-            return;
+            eprintln!("{}", e.to_string());
+            process::exit(1);
         }
     };
 
     match Git::create_commit(&config.pr_name) {
-        Ok(_) => println!("{}", "Successfully created the commit.".bright_green()),
+        Ok(_) => println!("{}", "✔️ Commit created.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string().red());
-            return;
+            eprintln!("{}", e.to_string());
+            process::exit(1);
         }
     };
 
     match Git::push(&config.branch) {
-        Ok(_) => println!("{}", "Successfully pushed.".bright_green()),
+        Ok(_) => println!("{}", "✔️ Successfully pushed.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string().red());
-            return;
+            eprintln!("{}", e.to_string());
+            process::exit(1);
         }
     };
 
-    let gh = Github::new(Config::get_github_token().unwrap().as_str());
+    let gh = Github::new(&github_token);
     let pr_url = match Github::create_pr(&gh, config).await {
         Ok(url) => {
-            println!(
-                "{}",
-                "Successfully created the pull request.".bright_green()
-            );
+            println!("{}", "✔️ Pull request created.".green());
             url
         }
-        Err(_) => {
-            eprintln!("An error occured");
+        Err(e) => {
+            eprintln!("{}", e.to_string());
             process::exit(1);
         }
     };
 
     let username = match Github::get_username(&gh).await {
-        Ok(username) => {
-            println!("{}", "Successfully get the current user.".bright_green());
-            username
-        }
-        Err(_) => {
-            eprintln!("An error occured");
+        Ok(username) => username,
+        Err(e) => {
+            eprintln!("{}", e.to_string());
             process::exit(1);
         }
     };
 
     let pr_number = pr_url.split("/").last().unwrap();
     match Github::assign_to_pr(&gh, &username, pr_number).await {
-        Ok(_) => println!("{}", "Successfully assigned you.".bright_green()),
-        Err(_) => {
-            eprintln!("An error occured");
+        Ok(_) => println!("{}", "✔️ Successfully assigned you.".green()),
+        Err(e) => {
+            eprintln!("{}", e.to_string());
             process::exit(1);
         }
     };
 
-    println!("{}", pr_url);
+    println!(
+        "🎉 {} The pull request url is: {}",
+        "Success!".green(),
+        pr_url.bright_cyan()
+    );
 }

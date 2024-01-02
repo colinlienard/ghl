@@ -55,7 +55,7 @@ impl Github {
         body.insert("assignees", vec![username]);
 
         let client = reqwest::Client::new();
-        let response = client
+        client
             .post(
                 "https://api.github.com/repos/".to_owned()
                     + &repo
@@ -67,10 +67,6 @@ impl Github {
             .headers(Github::construct_headers(&github.token))
             .send()
             .await?;
-
-        let text = response.text().await?;
-        let json: serde_json::Value = serde_json::from_str(&text)?;
-        println!("{:#?}", json["html_url"]);
 
         Ok(())
     }
@@ -84,9 +80,7 @@ impl Github {
             .await?;
 
         let text = response.text().await?;
-        println!("{:#?}", text);
         let json: serde_json::Value = serde_json::from_str(&text)?;
-        println!("{:#?}", json);
 
         Ok(json["login"].as_str().unwrap().to_string())
     }

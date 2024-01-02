@@ -14,25 +14,16 @@ pub struct Config {
 }
 
 impl Config {
-    fn get_paths() -> (String, String, String) {
-        let home = home_dir().unwrap();
-        let home = home.to_str().unwrap();
-        let dir_path = home.to_owned() + "/.snp";
-        let token_path = dir_path.to_owned() + "/token";
-        let default_desc_path = dir_path.to_owned() + "/desc.md";
-        (dir_path, token_path, default_desc_path)
-    }
-
-    pub fn set_github_token() -> Result<(), InquireError> {
+    pub fn set_github_token() -> Result<bool, InquireError> {
         let token = Text::new("Github token:").prompt_skippable()?;
         let token = match token {
             Some(token) => {
                 if token.is_empty() {
-                    return Ok(());
+                    return Ok(false);
                 }
                 token
             }
-            None => return Ok(()),
+            None => return Ok(false),
         };
 
         let (dir_path, token_path, _) = Config::get_paths();
@@ -51,7 +42,7 @@ impl Config {
         }
         fs::write(&token_path, token)?;
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn get_github_token() -> Result<String, Error> {
@@ -60,14 +51,27 @@ impl Config {
         Ok(token)
     }
 
-    pub fn set_default_desc() -> Result<(), InquireError> {
+    pub fn set_default_desc() -> Result<bool, InquireError> {
         let actual = match Config::get_default_desc() {
             Ok(desc) => desc,
             Err(_) => String::new(),
         };
         let desc = Editor::new("Pull request description")
             .with_predefined_text(&actual)
-            .prompt()?;
+            .prompt_skippable()?;
+        let desc = match desc {
+            Some(desc) => {
+                if desc.is_empty() {
+                    return Ok(false);
+                }
+                desc
+            }
+            None => return Ok(false),
+        };
+
+        if actual == desc {
+            return Ok(false);
+        }
 
         let (dir_path, _, default_desc_path) = Config::get_paths();
 
@@ -85,7 +89,7 @@ impl Config {
         }
         fs::write(&default_desc_path, desc)?;
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn get_default_desc() -> Result<String, Error> {
@@ -103,7 +107,16 @@ impl Config {
         let pr_name_validator =
             |value: &str| match PR_PREFIX.iter().any(|current| value.starts_with(current)) {
                 true => Ok(Validation::Valid),
-                false => Ok(Validation::Invalid("TODO".into())),
+                false => {
+                    let mut output = PR_PREFIX
+                        .iter()
+                        .map(|current| ("- ".to_owned() + current + "...").to_string())
+                        .collect::<Vec<String>>()
+                        .join("\n");
+                    output =
+                        "The name must start with one of the following:\n".to_owned() + &output;
+                    Ok(Validation::Invalid(output.into()))
+                }
             };
 
         let linear_branch = Text::new("Linear branch name:")
@@ -135,21 +148,24 @@ impl Config {
     pub fn confirm(config: &Config) -> Result<bool, InquireError> {
         println!(
             "\
-{}
-{} {}
-{}
-{}
-{} {}
-{}",
-            "This will:".bright_cyan(),
-            "- Create a branch called".bright_cyan(),
-            config.branch.bright_cyan().italic(),
-            "- Create an empty commit".bright_cyan(),
-            "- Push".bright_cyan(),
-            "- Create a PR named".bright_cyan(),
-            config.pr_name.bright_cyan().italic(),
-            "- TODO...".bright_cyan()
+This will:
+1. Create a branch called {}.
+2. Create an empty commit.
+3. Push to the remote repository.
+4. Create a pull request named {}.
+5. Assign you the pull request.",
+            config.branch.bright_cyan(),
+            config.pr_name.bright_cyan(),
         );
         Confirm::new("Confirm? (y/n)").prompt()
+    }
+
+    fn get_paths() -> (String, String, String) {
+        let home = home_dir().unwrap();
+        let home = home.to_str().unwrap();
+        let dir_path = home.to_owned() + "/.snp";
+        let token_path = dir_path.to_owned() + "/token";
+        let default_desc_path = dir_path.to_owned() + "/desc.md";
+        (dir_path, token_path, default_desc_path)
     }
 }

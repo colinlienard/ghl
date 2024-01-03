@@ -21,8 +21,8 @@ jobs:
       - name: Build
         run: cargo build --release
       - name: Get current version
-          id: version
-          uses: dante-signal31/rust-app-version@v1.2.0
+        id: version
+        uses: dante-signal31/rust-app-version@v1.2.0
       - name: Create release
         uses: ncipollo/release-action@v1
         with:

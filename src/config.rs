@@ -1,5 +1,5 @@
 use home::home_dir;
-use std::{fs, io::Error};
+use std::{ffi::OsStr, fs, io::Error};
 
 use colored::*;
 use inquire::{validator::Validation, Confirm, Editor, InquireError, Text};
@@ -58,6 +58,7 @@ impl Config {
         };
         let desc = Editor::new("Pull request description")
             .with_predefined_text(&actual)
+            .with_editor_command(OsStr::new("vim"))
             .prompt_skippable()?;
         let desc = match desc {
             Some(desc) => {

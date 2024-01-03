@@ -241,6 +241,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ghl"
+version = "0.1.0"
+dependencies = [
+ "colored",
+ "home",
+ "inquire",
+ "reqwest",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -840,18 +852,6 @@ name = "smallvec"
 version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
-
-[[package]]
-name = "snp"
-version = "0.1.0"
-dependencies = [
- "colored",
- "home",
- "inquire",
- "reqwest",
- "serde_json",
- "tokio",
-]
 
 [[package]]
 name = "socket2"

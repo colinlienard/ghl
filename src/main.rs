@@ -41,7 +41,7 @@ async fn main() {
         }
         "help" | _ => {
             println!("{}", "Usage".bold());
-            println!("  snp [command]");
+            println!("  ghl [command]");
             println!("");
             println!("{}", "Commands".bold());
             println!("  help        Display this message.");
@@ -59,7 +59,7 @@ async fn main() {
     }
 
     let github_token = Config::get_github_token().unwrap_or_else(|_| {
-        eprintln!("Please set the token with `snp config`.");
+        eprintln!("Please set the token with `ghl config`.");
         process::exit(1);
     });
 

@@ -163,7 +163,7 @@ This will:
     fn get_paths() -> (String, String, String) {
         let home = home_dir().unwrap();
         let home = home.to_str().unwrap();
-        let dir_path = home.to_owned() + "/.snp";
+        let dir_path = home.to_owned() + "/.ghl";
         let token_path = dir_path.to_owned() + "/token";
         let default_desc_path = dir_path.to_owned() + "/desc.md";
         (dir_path, token_path, default_desc_path)

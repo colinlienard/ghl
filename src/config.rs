@@ -28,17 +28,11 @@ impl Config {
 
         let (dir_path, token_path, _) = Config::get_paths();
 
-        match fs::read_dir(&dir_path) {
-            Ok(_) => {}
-            Err(_) => {
-                fs::create_dir(&dir_path)?;
-            }
-        };
-        match fs::read(&token_path) {
-            Ok(_) => {}
-            Err(_) => {
-                fs::File::create(&token_path)?;
-            }
+        if fs::read_dir(&dir_path).is_err() {
+            fs::create_dir(&dir_path)?;
+        }
+        if fs::read(&token_path).is_err() {
+            fs::File::create(&token_path)?;
         }
         fs::write(&token_path, token)?;
 
@@ -139,14 +133,14 @@ impl Config {
             "Rework" => "rework",
             "Ignore" => "feature",
             "Bump" => "core",
-            &_ => todo!(),
+            _ => return Err(InquireError::Custom("Invalid input".into())),
         };
         let branch = branch_prefix.to_owned() + "/" + &linear_branch;
 
         Ok(Config { pr_name, branch })
     }
 
-    pub fn confirm(config: &Config) -> Result<bool, InquireError> {
+    pub fn confirm(&self) -> Result<bool, InquireError> {
         println!(
             "\
 This will:
@@ -155,8 +149,8 @@ This will:
 3. Push to the remote repository.
 4. Create a pull request named {}.
 5. Assign you the pull request.",
-            config.branch.bright_cyan(),
-            config.pr_name.bright_cyan(),
+            self.branch.bright_cyan(),
+            self.pr_name.bright_cyan(),
         );
         Confirm::new("Confirm? (y/n)").prompt()
     }

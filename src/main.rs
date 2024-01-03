@@ -39,10 +39,10 @@ async fn main() {
             };
             return;
         }
-        "help" | _ => {
+        _ => {
             println!("{}", "Usage".bold());
             println!("  ghl [command]");
-            println!("");
+            println!();
             println!("{}", "Commands".bold());
             println!("  help        Display this message.");
             println!(
@@ -64,12 +64,12 @@ async fn main() {
     });
 
     let config = Config::ask().unwrap_or_else(|e| {
-        eprintln!("{}", e.to_string());
+        eprintln!("{}", e);
         process::exit(1);
     });
 
     match Config::confirm(&config).unwrap_or_else(|e| {
-        eprintln!("{}", e.to_string());
+        eprintln!("{}", e);
         process::exit(1);
     }) {
         true => {}
@@ -79,7 +79,7 @@ async fn main() {
     match Git::create_branch(&config.branch) {
         Ok(_) => println!("{}", "✔️ Branch created.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
@@ -87,7 +87,7 @@ async fn main() {
     match Git::create_commit(&config.pr_name) {
         Ok(_) => println!("{}", "✔️ Commit created.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
@@ -95,7 +95,7 @@ async fn main() {
     match Git::push(&config.branch) {
         Ok(_) => println!("{}", "✔️ Successfully pushed.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
@@ -107,7 +107,7 @@ async fn main() {
             url
         }
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
@@ -115,16 +115,16 @@ async fn main() {
     let username = match Github::get_username(&gh).await {
         Ok(username) => username,
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
 
-    let pr_number = pr_url.split("/").last().unwrap();
+    let pr_number = pr_url.split('/').last().unwrap();
     match Github::assign_to_pr(&gh, &username, pr_number).await {
         Ok(_) => println!("{}", "✔️ Successfully assigned you.".green()),
         Err(e) => {
-            eprintln!("{}", e.to_string());
+            eprintln!("{}", e);
             process::exit(1);
         }
     };

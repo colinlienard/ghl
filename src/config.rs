@@ -47,7 +47,7 @@ impl Config {
 
     pub fn get_github_token() -> Result<String, Error> {
         let (_, token_path, _) = Config::get_paths();
-        let token = fs::read_to_string(&token_path)?;
+        let token = fs::read_to_string(token_path)?;
         Ok(token)
     }
 
@@ -94,7 +94,7 @@ impl Config {
 
     pub fn get_default_desc() -> Result<String, Error> {
         let (_, _, default_desc_path) = Config::get_paths();
-        let default_desc = fs::read_to_string(&default_desc_path)?;
+        let default_desc = fs::read_to_string(default_desc_path)?;
         Ok(default_desc)
     }
 

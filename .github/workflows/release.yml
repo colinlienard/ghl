@@ -21,13 +21,13 @@ jobs:
       - name: Build
         run: cargo build --release
       - name: Get current version
-        id: package-version
-        run: echo ::set-output name=current-version::$(cargo pkgid | cut -d# -f2 | cut -d: -f2)
+          id: version
+          uses: dante-signal31/rust-app-version@v1.2.0
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
           artifacts: target/release/ghl
           generateReleaseNotes: true
           makeLatest: true
-          name: ghl v${{ steps.package-version.outputs.current-version }}
-          tag: ghl-v${{ steps.package-version.outputs.current-version }}
+          name: ghl v${{ steps.version.outputs.app_version }}
+          tag: ghl-v${{ steps.version.outputs.app_version }}

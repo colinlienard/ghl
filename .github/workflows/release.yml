@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    if: contains(github.event.head_commit.message, 'release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --release
+      - name: Get current version
+        id: version
+        uses: dante-signal31/rust-app-version@v1.2.0
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: target/release/ghl
+          generateReleaseNotes: true
+          makeLatest: true
+          name: ghl v${{ steps.version.outputs.app_version }}
+          tag: ghl-v${{ steps.version.outputs.app_version }}

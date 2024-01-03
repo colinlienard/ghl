@@ -19,7 +19,13 @@ pub fn create_commit(msg: &str) -> Result<String, Error> {
 }
 
 pub fn push(branch: &str) -> Result<String, Error> {
-    process_command(Command::new("git").arg("push").arg("origin").arg(branch))
+    process_command(
+        Command::new("git")
+            .arg("push")
+            .arg("-u")
+            .arg("origin")
+            .arg(branch),
+    )
 }
 
 pub fn get_current_repo() -> Result<String, Error> {

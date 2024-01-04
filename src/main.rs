@@ -82,6 +82,7 @@ async fn create(github_token: &str) -> Result<String, Box<dyn std::error::Error>
     };
 
     git::create_branch(&config.branch)?;
+    println!("{}", "✔️ Branch created.".green());
 
     git::create_commit(&config.pr_name)?;
     println!("{}", "✔️ Commit created.".green());

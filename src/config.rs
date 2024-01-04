@@ -105,7 +105,7 @@ impl Config {
                 false => {
                     let mut output = PR_PREFIX
                         .iter()
-                        .map(|current| ("- ".to_owned() + current + "...").to_string())
+                        .map(|current| format!("- {}...", current))
                         .collect::<Vec<String>>()
                         .join("\n");
                     output =
@@ -135,7 +135,7 @@ impl Config {
             "Bump" => "core",
             _ => return Err(InquireError::Custom("Invalid input".into())),
         };
-        let branch = branch_prefix.to_owned() + "/" + &linear_branch;
+        let branch = format!("{}/{}", branch_prefix, &linear_branch);
 
         Ok(Config { pr_name, branch })
     }

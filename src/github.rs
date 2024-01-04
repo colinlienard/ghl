@@ -31,7 +31,7 @@ impl<'a> Github<'a> {
 
         let response = self
             .client
-            .post("https://api.github.com/repos/".to_owned() + &repo + "/pulls")
+            .post(format!("https://api.github.com/repos/{}/pulls", &repo))
             .body(serde_json::to_string(&body)?)
             .headers(Github::construct_headers(self.token))
             .send()
@@ -53,13 +53,10 @@ impl<'a> Github<'a> {
         let body = HashMap::from([("assignees", vec![username])]);
 
         self.client
-            .post(
-                "https://api.github.com/repos/".to_owned()
-                    + &repo
-                    + "/issues/"
-                    + number
-                    + "/assignees",
-            )
+            .post(format!(
+                "https://api.github.com/repos/{}/issues/{}/assignees",
+                &repo, number
+            ))
             .body(serde_json::to_string(&body)?)
             .headers(Github::construct_headers(self.token))
             .send()

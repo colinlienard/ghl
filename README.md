@@ -2,10 +2,9 @@
 
 A small CLI to create pull requests linked to Linear in seconds.
 
----
-
 > [!NOTE]  
-> This is made to be used in, only compatible with Macos
+> This is made to be used at my company and is adapted to our rules.
+> It is also only compatible with Macos.
 
 ## Install (or update)
 
@@ -28,8 +27,6 @@ ghl config
 ```
 
 ### Creating a pull request
-
-Run the following:
 
 ```bash
 ghl create

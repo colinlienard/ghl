@@ -1,11 +1,11 @@
 use colored::*;
-use std::{env, process};
-mod config;
 use config::Config;
-mod git;
-use git::Git;
-mod github;
 use github::Github;
+use std::{env, process};
+
+mod config;
+mod git;
+mod github;
 
 #[tokio::main]
 async fn main() {
@@ -15,27 +15,24 @@ async fn main() {
         "create" => {}
         "config" => {
             match Config::set_github_token() {
-                Ok(set) => {
-                    if set {
-                        println!("{}", "✔️ Token set.".green())
-                    } else {
-                        println!("{}", "Skipped.".dimmed())
-                    }
-                }
+                Ok(set) => match set {
+                    true => println!("{}", "✔️ Token set.".green()),
+                    false => println!("{}", "Skipped.".dimmed()),
+                },
                 Err(e) => {
-                    eprintln!("{}", e.to_string().red());
-                    return;
+                    eprintln!("{}", e);
+                    process::exit(1);
                 }
             };
             match Config::set_default_desc() {
-                Ok(set) => {
-                    if set {
-                        println!("{}", "✓ Default pull request description set.".green());
-                    } else {
-                        println!("{}", "Skipped.".dimmed());
-                    }
+                Ok(set) => match set {
+                    true => println!("{}", "✓ Default pull request description set.".green()),
+                    false => println!("{}", "Skipped.".dimmed()),
+                },
+                Err(e) => {
+                    eprintln!("{}", e);
+                    process::exit(1);
                 }
-                Err(e) => eprintln!("{}", e.to_string().red()),
             };
             return;
         }
@@ -63,75 +60,46 @@ async fn main() {
         process::exit(1);
     });
 
-    let config = Config::ask().unwrap_or_else(|e| {
+    let pr_url = create(&github_token).await.unwrap_or_else(|e| {
         eprintln!("{}", e);
         process::exit(1);
     });
 
-    match Config::confirm(&config).unwrap_or_else(|e| {
-        eprintln!("{}", e);
-        process::exit(1);
-    }) {
-        true => {}
-        false => return,
-    }
-
-    match Git::create_branch(&config.branch) {
-        Ok(_) => println!("{}", "✔️ Branch created.".green()),
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
-
-    match Git::create_commit(&config.pr_name) {
-        Ok(_) => println!("{}", "✔️ Commit created.".green()),
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
-
-    match Git::push(&config.branch) {
-        Ok(_) => println!("{}", "✔️ Successfully pushed.".green()),
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
-
-    let gh = Github::new(&github_token);
-    let pr_url = match Github::create_pr(&gh, config).await {
-        Ok(url) => {
-            println!("{}", "✔️ Pull request created.".green());
-            url
-        }
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
-
-    let username = match Github::get_username(&gh).await {
-        Ok(username) => username,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
-
-    let pr_number = pr_url.split('/').last().unwrap();
-    match Github::assign_to_pr(&gh, &username, pr_number).await {
-        Ok(_) => println!("{}", "✔️ Successfully assigned you.".green()),
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
-
     println!(
-        "🎉 {} The pull request url is: {}",
-        "Success!".green(),
+        "🎉 Success! The pull request url is: {}",
         pr_url.bright_cyan()
     );
+}
+
+async fn create(github_token: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let config = Config::ask()?;
+
+    match Config::confirm(&config)? {
+        true => {}
+        false => {
+            return Err("Aborted.".into());
+        }
+    };
+
+    git::create_branch(&config.branch)?;
+    println!("{}", "✔️ Branch created.".green());
+
+    git::create_commit(&config.pr_name)?;
+    println!("{}", "✔️ Commit created.".green());
+
+    git::push(&config.branch)?;
+    println!("{}", "✔️ Successfully pushed.".green());
+
+    let gh = Github::new(github_token);
+
+    let pr_url = gh.create_pr(config).await?;
+    println!("{}", "✔️ Pull request created.".green());
+
+    let username = gh.get_username().await?;
+
+    let pr_number = pr_url.split('/').last().unwrap();
+    gh.assign_to_pr(&username, pr_number).await?;
+    println!("{}", "✔️ Successfully assigned you.".green());
+
+    Ok(pr_url)
 }

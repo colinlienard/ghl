@@ -2,39 +2,38 @@ use std::collections::HashMap;
 
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 
-use crate::{config::Config, git::Git};
+use crate::{config::Config, git};
 
-pub struct Github {
-    pub token: String,
+pub struct Github<'a> {
+    token: &'a str,
+    client: reqwest::Client,
 }
 
-impl Github {
-    pub fn new(token: &str) -> Self {
-        let token = token.to_string();
-        Self { token }
+impl<'a> Github<'a> {
+    pub fn new(token: &'a str) -> Self {
+        let client = reqwest::Client::new();
+        Self { token, client }
     }
 
-    pub async fn create_pr(
-        github: &Github,
-        config: Config,
-    ) -> Result<String, Box<dyn std::error::Error>> {
-        let repo = Git::get_current_repo()?;
+    pub async fn create_pr(&self, config: Config) -> Result<String, Box<dyn std::error::Error>> {
+        let repo = git::get_current_repo()?;
         let default_desc = Config::get_default_desc()?;
-        let base = Git::get_default_branch()?;
-        // let draft = String::from("true");
+        let base = git::get_default_branch()?;
+        let draft = String::from("true");
 
-        let mut body = HashMap::new();
-        body.insert("title", &config.pr_name);
-        body.insert("head", &config.branch);
-        body.insert("base", &base);
-        body.insert("body", &default_desc);
-        // body.insert("draft", &draft);
+        let body = HashMap::from([
+            ("title", &config.pr_name),
+            ("head", &config.branch),
+            ("base", &base),
+            ("body", &default_desc),
+            ("draft", &draft),
+        ]);
 
-        let client = reqwest::Client::new();
-        let response = client
-            .post("https://api.github.com/repos/".to_owned() + &repo + "/pulls")
+        let response = self
+            .client
+            .post(format!("https://api.github.com/repos/{}/pulls", &repo))
             .body(serde_json::to_string(&body)?)
-            .headers(Github::construct_headers(&github.token))
+            .headers(Github::construct_headers(self.token))
             .send()
             .await?;
 
@@ -45,37 +44,32 @@ impl Github {
     }
 
     pub async fn assign_to_pr(
-        github: &Github,
+        &self,
         username: &str,
         number: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let repo = Git::get_current_repo()?;
+        let repo = git::get_current_repo()?;
 
-        let mut body = HashMap::new();
-        body.insert("assignees", vec![username]);
+        let body = HashMap::from([("assignees", vec![username])]);
 
-        let client = reqwest::Client::new();
-        client
-            .post(
-                "https://api.github.com/repos/".to_owned()
-                    + &repo
-                    + "/issues/"
-                    + number
-                    + "/assignees",
-            )
+        self.client
+            .post(format!(
+                "https://api.github.com/repos/{}/issues/{}/assignees",
+                &repo, number
+            ))
             .body(serde_json::to_string(&body)?)
-            .headers(Github::construct_headers(&github.token))
+            .headers(Github::construct_headers(self.token))
             .send()
             .await?;
 
         Ok(())
     }
 
-    pub async fn get_username(github: &Github) -> Result<String, Box<dyn std::error::Error>> {
-        let client = reqwest::Client::new();
-        let response = client
+    pub async fn get_username(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let response = self
+            .client
             .get("https://api.github.com/user")
-            .headers(Github::construct_headers(&github.token))
+            .headers(Github::construct_headers(self.token))
             .send()
             .await?;
 

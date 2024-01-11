@@ -16,7 +16,7 @@ async fn main() {
         "config" => {
             match Config::set_github_token() {
                 Ok(set) => match set {
-                    true => println!("{}", "✔️ Token set.".green()),
+                    true => println!("{}", "✔ Token set.".green()),
                     false => println!("{}", "Skipped.".dimmed()),
                 },
                 Err(e) => {
@@ -67,7 +67,7 @@ async fn main() {
 
     println!(
         "🎉 Success! The pull request url is: {}",
-        pr_url.bright_cyan()
+        pr_url.replace('"', "").bright_cyan()
     );
 }
 
@@ -82,24 +82,24 @@ async fn create(github_token: &str) -> Result<String, Box<dyn std::error::Error>
     };
 
     git::create_branch(&config.branch)?;
-    println!("{}", "✔️ Branch created.".green());
+    println!("{}", "✔ Branch created.".green());
 
     git::create_commit(&config.pr_name)?;
-    println!("{}", "✔️ Commit created.".green());
+    println!("{}", "✔ Commit created.".green());
 
     git::push(&config.branch)?;
-    println!("{}", "✔️ Successfully pushed.".green());
+    println!("{}", "✔ Successfully pushed.".green());
 
     let gh = Github::new(github_token);
 
     let pr_url = gh.create_pr(config).await?;
-    println!("{}", "✔️ Pull request created.".green());
+    println!("{}", "✔ Pull request created.".green());
 
     let username = gh.get_username().await?;
 
     let pr_number = pr_url.split('/').last().unwrap();
     gh.assign_to_pr(&username, pr_number).await?;
-    println!("{}", "✔️ Successfully assigned you.".green());
+    println!("{}", "✔ Successfully assigned you.".green());
 
     Ok(pr_url)
 }

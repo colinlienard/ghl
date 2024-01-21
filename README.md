@@ -11,7 +11,7 @@ A small CLI to create pull requests linked to Linear in seconds.
 Run the following:
 
 ```bash
-curl -o ghl -L https://github.com/colinlienard/ghl/releases/latest/download/ghl && chmod +x ghl && sudo mv ghl /usr/local/bin/
+curl -o ghl -L https://github.com/colinlienard/ghl/releases/latest/download/ghl && chmod +x ghl && mv ghl ~/.local/bin/
 ```
 
 ## Usage

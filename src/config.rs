@@ -118,9 +118,19 @@ impl Config {
             .with_validator(not_empty_validator)
             .prompt()?;
 
-        let pr_name = Text::new("Pull request name:")
+        let mut pr_name = Text::new("Pull request name:")
             .with_validators(&[Box::new(not_empty_validator), Box::new(pr_name_validator)])
             .prompt()?;
+
+        let splited_branch = linear_branch.split('-').collect::<Vec<&str>>();
+        if splited_branch.len() > 1 {
+            pr_name = format!(
+                "{} [{}-{}]",
+                pr_name,
+                splited_branch[0].to_uppercase(),
+                splited_branch[1]
+            )
+        }
 
         let prefix = pr_name.split(' ').collect::<Vec<&str>>()[0];
         let branch_prefix = match prefix {

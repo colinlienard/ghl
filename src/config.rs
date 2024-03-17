@@ -2,11 +2,7 @@ use home::home_dir;
 use std::{ffi::OsStr, fs, io::Error};
 
 use colored::*;
-use inquire::{validator::Validation, Confirm, Editor, InquireError, Text};
-
-const PR_PREFIX: [&str; 9] = [
-    "Add ", "Clean ", "Fix ", "Improve ", "Remove ", "Update ", "Rework ", "Ignore ", "Bump ",
-];
+use inquire::{validator::Validation, Confirm, Editor, InquireError, Select, Text};
 
 pub struct Config {
     pub pr_name: String,
@@ -99,28 +95,32 @@ impl Config {
             false => Ok(Validation::Valid),
         };
 
-        let pr_name_validator =
-            |value: &str| match PR_PREFIX.iter().any(|current| value.starts_with(current)) {
-                true => Ok(Validation::Valid),
-                false => {
-                    let mut output = PR_PREFIX
-                        .iter()
-                        .map(|current| format!("- {}...", current))
-                        .collect::<Vec<String>>()
-                        .join("\n");
-                    output =
-                        "The name must start with one of the following:\n".to_owned() + &output;
-                    Ok(Validation::Invalid(output.into()))
-                }
-            };
-
         let linear_branch = Text::new("Linear branch name:")
             .with_validator(not_empty_validator)
             .prompt()?;
 
-        let mut pr_name = Text::new("Pull request name:")
-            .with_validators(&[Box::new(not_empty_validator), Box::new(pr_name_validator)])
+        let type_options: Vec<&str> = vec![
+            "feat", "fix", "refactor", "perf", "style", "test", "docs", "build", "ops", "chore",
+        ];
+
+        let _type = Select::new("Type:", type_options).prompt()?;
+
+        let scope = Text::new("Scope (optional):").prompt_skippable()?;
+
+        let name = Text::new("Name:")
+            .with_validators(&[Box::new(not_empty_validator)])
             .prompt()?;
+
+        let mut pr_name = match scope {
+            Some(scope) => {
+                if scope.is_empty() {
+                    format!("{}: {}", _type, name)
+                } else {
+                    format!("{}({}): {}", _type, scope, name)
+                }
+            }
+            None => format!("{}: {}", _type, name),
+        };
 
         let splited_branch = linear_branch.split('-').collect::<Vec<&str>>();
         if splited_branch.len() > 1 {
@@ -132,20 +132,7 @@ impl Config {
             )
         }
 
-        let prefix = pr_name.split(' ').collect::<Vec<&str>>()[0];
-        let branch_prefix = match prefix {
-            "Add" => "feature",
-            "Clean" => "rework",
-            "Fix" => "fix",
-            "Improve" => "rework",
-            "Remove" => "feature",
-            "Update" => "feature",
-            "Rework" => "rework",
-            "Ignore" => "feature",
-            "Bump" => "core",
-            _ => return Err(InquireError::Custom("Invalid input".into())),
-        };
-        let branch = format!("{}/{}", branch_prefix, &linear_branch);
+        let branch = format!("{}/{}", _type, &linear_branch);
 
         Ok(Config { pr_name, branch })
     }

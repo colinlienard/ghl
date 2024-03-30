@@ -100,10 +100,21 @@ impl Config {
             .prompt()?;
 
         let type_options: Vec<&str> = vec![
-            "feat", "fix", "refactor", "perf", "style", "test", "docs", "build", "ops", "chore",
+            "feat        Add a new feature",
+            "fix         Correct a bug or error",
+            "change      Change an existing feature",
+            "refactor    Restructure existing code without altering the product behavior",
+            "chore       Routine task, maintenance, or project management that does not directly modify the source code",
+            "test        Add missing tests or correcting existing tests",
+            "docs        Update or create documentation",
+            "ci          Changes related to continuous integration or build environment configuration",
+            "remove      Removal of obsolete or unnecessary code, files, or features",
+            "perf        Improvement of code performance without changing its external behavior",
+            "revert      Complete or partial reversal of a previous commit",
         ];
 
         let _type = Select::new("Type:", type_options).prompt()?;
+        let _type = _type.split_whitespace().collect::<Vec<&str>>()[0];
 
         let scope = Text::new("Scope (optional):").prompt_skippable()?;
 

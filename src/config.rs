@@ -134,7 +134,7 @@ impl Config {
         };
 
         let splited_branch = linear_branch.split('-').collect::<Vec<&str>>();
-        if splited_branch.len() > 1 {
+        if splited_branch.len() > 1 && splited_branch[1].parse::<u32>().is_ok() {
             pr_name = format!(
                 "{} [{}-{}]",
                 pr_name,

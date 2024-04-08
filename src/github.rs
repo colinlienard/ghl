@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::process;
 
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 
@@ -37,6 +38,15 @@ impl<'a> Github<'a> {
             .send()
             .await?;
 
+        match response.error_for_status_ref() {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Could not create PR");
+                eprintln!("{}", e);
+                process::exit(1);
+            }
+        }
+
         let text = response.text().await?;
         let json: serde_json::Value = serde_json::from_str(&text)?;
 
@@ -52,7 +62,8 @@ impl<'a> Github<'a> {
 
         let body = HashMap::from([("assignees", vec![username])]);
 
-        self.client
+        let response = self
+            .client
             .post(format!(
                 "https://api.github.com/repos/{}/issues/{}/assignees",
                 &repo, number
@@ -61,6 +72,15 @@ impl<'a> Github<'a> {
             .headers(Github::construct_headers(self.token))
             .send()
             .await?;
+
+        match response.error_for_status_ref() {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Could not assign you to the PR");
+                eprintln!("{}", e);
+                process::exit(1);
+            }
+        }
 
         Ok(())
     }

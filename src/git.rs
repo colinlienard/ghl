@@ -33,7 +33,17 @@ pub fn get_current_repo() -> Result<String, Error> {
     for line in git_config.lines() {
         if line.contains("url = ") {
             let url = line.split("url = ").collect::<Vec<&str>>()[1];
-            let repo = url.replace("https://github.com/", "").replace(".git", "");
+            let repo = if url.starts_with("https://github.com/") {
+                url.replace("https://github.com/", "").replace(".git", "")
+            } else if url.starts_with("git@github.com:") {
+                url.replace("git@github.com:", "").replace(".git", "")
+            } else {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    "Unsupported repo URL format.".to_string(),
+                ));
+            };
+
             return Ok(repo);
         }
     }

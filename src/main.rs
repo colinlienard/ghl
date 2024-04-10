@@ -66,7 +66,7 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
         pr_url.replace('"', "").bright_cyan()
     );
 
-    open::that(pr_url)?;
+    open::that(pr_url.replace('"', ""))?;
 
     Ok(())
 }

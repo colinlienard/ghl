@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let arg = if args.len() > 1 { &args[1] } else { "" };
 
     match arg {
-        "create" | "-c" => create_command().await?,
+        "pr" => pr_command().await?,
         "config" => config_command()?,
         "version" | "-v" => version_command().await?,
         "update" | "-up" => update_command()?,
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn create_command() -> Result<(), Box<dyn Error>> {
+async fn pr_command() -> Result<(), Box<dyn Error>> {
     let github_token = Config::get_github_token().unwrap_or_else(|_| {
         eprintln!("Please set the token with `ghl config`.");
         process::exit(1);

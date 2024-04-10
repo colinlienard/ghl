@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::process;
+use std::{error::Error, process};
 
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
 
@@ -16,7 +16,7 @@ impl<'a> Github<'a> {
         Self { token, client }
     }
 
-    pub async fn create_pr(&self, config: Config) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn create_pr(&self, config: Config) -> Result<String, Box<dyn Error>> {
         let repo = git::get_current_repo()?;
         let default_desc = Config::get_default_desc()?;
         let base = git::get_default_branch()?;
@@ -53,11 +53,7 @@ impl<'a> Github<'a> {
         Ok(json["html_url"].to_string())
     }
 
-    pub async fn assign_to_pr(
-        &self,
-        username: &str,
-        number: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn assign_to_pr(&self, username: &str, number: &str) -> Result<(), Box<dyn Error>> {
         let repo = git::get_current_repo()?;
 
         let body = HashMap::from([("assignees", vec![username])]);
@@ -85,7 +81,7 @@ impl<'a> Github<'a> {
         Ok(())
     }
 
-    pub async fn get_username(&self) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_username(&self) -> Result<String, Box<dyn Error>> {
         let response = self
             .client
             .get("https://api.github.com/user")
@@ -111,4 +107,25 @@ impl<'a> Github<'a> {
         headers.insert(USER_AGENT, HeaderValue::from_static(""));
         headers
     }
+}
+
+pub async fn get_package_latest_version() -> Result<String, Box<dyn Error>> {
+    let client = reqwest::Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(USER_AGENT, HeaderValue::from_static(""));
+
+    let response = client
+        .get("https://api.github.com/repos/colinlienard/ghl/releases/latest")
+        .headers(headers)
+        .send()
+        .await?;
+
+    let text = response.text().await?;
+    let json: serde_json::Value = serde_json::from_str(&text)?;
+
+    let name = json["name"].as_str().unwrap().to_string();
+    let version = name.split('v').last().unwrap().to_string();
+
+    Ok(version)
 }

@@ -1,7 +1,8 @@
+use crate::utils::process_command;
 use std::{
     fs,
     io::{Error, ErrorKind},
-    process::{Command, Stdio},
+    process::Command,
 };
 
 pub fn create_branch(branch: &str) -> Result<String, Error> {
@@ -65,23 +66,4 @@ pub fn get_default_branch() -> Result<String, Error> {
         ErrorKind::Other,
         "Could not find the default branch.".to_string(),
     ))
-}
-
-fn process_command(command: &mut Command) -> Result<String, Error> {
-    let output = command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap()
-        .wait_with_output()?;
-
-    if output.status.success() {
-        Ok(String::from_utf8(output.stdout).unwrap())
-    } else {
-        Err(Error::new(
-            ErrorKind::Other,
-            String::from_utf8(output.stderr).unwrap(),
-        ))
-    }
 }

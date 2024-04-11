@@ -53,6 +53,7 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
     let gh = Github::new(&github_token);
 
     let pr_url = gh.create_pr(config).await?;
+    let pr_url = pr_url.replace('"', "");
     println!("{}", "✔ Pull request created.".green());
 
     let username = gh.get_username().await?;
@@ -63,8 +64,10 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
 
     println!(
         "🎉 Success! The pull request url is: {}",
-        pr_url.replace('"', "").bright_cyan()
+        pr_url.bright_cyan()
     );
+
+    open::that(pr_url)?;
 
     Ok(())
 }
@@ -123,14 +126,14 @@ fn help_command() {
     println!("  ghl [command]");
     println!();
     println!("{}", "Commands".bold());
-    println!("  help           Display this message.");
     println!("  config         Set the GitHub token and the default pull request description.");
-    println!("  create, -c     Do the following:");
+    println!("  help           Display this message.");
+    println!("  pr             Do the following:");
     println!("                   1. Create a new branch.");
     println!("                   2. Create a new commit.");
     println!("                   3. Push to the remote repository.");
     println!("                   4. Create a new pull request.");
     println!("                   5. Assign you the pull request.");
-    println!("  version, -v    Display the current and the latest version.");
     println!("  update, -up    Update the binary to the latest version.");
+    println!("  version, -v    Display the current and the latest version.");
 }

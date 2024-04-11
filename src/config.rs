@@ -2,7 +2,10 @@ use home::home_dir;
 use std::{ffi::OsStr, fs, io::Error};
 
 use colored::*;
-use inquire::{validator::Validation, Confirm, Editor, InquireError, Select, Text};
+use inquire::{
+    validator::{StringValidator, Validation},
+    Confirm, Editor, InquireError, Select, Text,
+};
 
 pub struct Config {
     pub pr_name: String,
@@ -89,16 +92,7 @@ impl Config {
         Ok(default_desc)
     }
 
-    pub fn ask() -> Result<Config, InquireError> {
-        let not_empty_validator = |value: &str| match value.is_empty() {
-            true => Ok(Validation::Invalid("You must enter a value.".into())),
-            false => Ok(Validation::Valid),
-        };
-
-        let linear_branch = Text::new("Linear branch name:")
-            .with_validator(not_empty_validator)
-            .prompt()?;
-
+    pub fn ask_commit() -> Result<(String, String), InquireError> {
         let type_options: Vec<&str> = vec![
             "feat        Add a new feature",
             "fix         Correct a bug or error",
@@ -115,14 +109,15 @@ impl Config {
 
         let _type = Select::new("Type:", type_options).prompt()?;
         let _type = _type.split_whitespace().collect::<Vec<&str>>()[0];
+        let _type = String::from(_type);
 
         let scope = Text::new("Scope (optional):").prompt_skippable()?;
 
         let name = Text::new("Name:")
-            .with_validators(&[Box::new(not_empty_validator)])
+            .with_validators(&[Box::new(get_not_empty_validator())])
             .prompt()?;
 
-        let mut pr_name = match scope {
+        let commit_name = match scope {
             Some(scope) => {
                 if scope.is_empty() {
                     format!("{}: {}", _type, name)
@@ -132,6 +127,16 @@ impl Config {
             }
             None => format!("{}: {}", _type, name),
         };
+
+        Ok((commit_name, _type))
+    }
+
+    pub fn ask_pr() -> Result<Config, InquireError> {
+        let linear_branch = Text::new("Linear branch name:")
+            .with_validator(get_not_empty_validator())
+            .prompt()?;
+
+        let (mut pr_name, _type) = Config::ask_commit()?;
 
         let splited_branch = linear_branch.split('-').collect::<Vec<&str>>();
         if splited_branch.len() > 1 && splited_branch[1].parse::<u32>().is_ok() {
@@ -170,5 +175,12 @@ This will:
         let token_path = dir_path.to_owned() + "/token";
         let default_desc_path = dir_path.to_owned() + "/desc.md";
         (dir_path, token_path, default_desc_path)
+    }
+}
+
+fn get_not_empty_validator() -> impl StringValidator {
+    |value: &str| match value.is_empty() {
+        true => Ok(Validation::Invalid("You must enter a value.".into())),
+        false => Ok(Validation::Valid),
     }
 }

@@ -17,6 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match arg {
         "pr" => pr_command().await?,
+        "commit" => commit_command()?,
         "config" => config_command()?,
         "version" | "-v" => version_command().await?,
         "update" | "-up" => update_command()?,
@@ -32,7 +33,7 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
         process::exit(1);
     });
 
-    let config = Config::ask()?;
+    let config = Config::ask_pr()?;
 
     match Config::confirm(&config)? {
         true => {}
@@ -69,6 +70,13 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
 
     open::that(pr_url)?;
 
+    Ok(())
+}
+
+fn commit_command() -> Result<(), Box<dyn Error>> {
+    let (commit_name, _) = Config::ask_commit()?;
+    git::create_commit(&commit_name)?;
+    println!("{}", "✔ Commit created.".green());
     Ok(())
 }
 
@@ -126,14 +134,15 @@ fn help_command() {
     println!("  ghl [command]");
     println!();
     println!("{}", "Commands".bold());
-    println!("  config         Set the GitHub token and the default pull request description.");
     println!("  help           Display this message.");
+    println!("  config         Set the GitHub token and the default pull request description.");
     println!("  pr             Do the following:");
     println!("                   1. Create a new branch.");
     println!("                   2. Create a new commit.");
     println!("                   3. Push to the remote repository.");
     println!("                   4. Create a new pull request.");
     println!("                   5. Assign you the pull request.");
-    println!("  update, -up    Update the binary to the latest version.");
+    println!("  commit, -c     Create a new conventional commit.");
     println!("  version, -v    Display the current and the latest version.");
+    println!("  update, -up    Update the binary to the latest version.");
 }

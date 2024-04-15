@@ -24,6 +24,7 @@ impl Config {
             }
             None => return Ok(false),
         };
+        let token = token.trim();
 
         let (dir_path, token_path, _) = Config::get_paths();
 

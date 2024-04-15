@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match arg {
         "pr" => pr_command().await?,
-        "commit" => commit_command()?,
+        "commit" | "-c" => commit_command()?,
         "config" => config_command()?,
         "version" | "-v" => version_command().await?,
         "update" | "-up" => update_command()?,

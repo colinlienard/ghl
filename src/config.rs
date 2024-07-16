@@ -117,13 +117,14 @@ impl Config {
         let name = Text::new("Name:")
             .with_validators(&[Box::new(get_not_empty_validator())])
             .prompt()?;
+        let name = name.trim();
 
         let commit_name = match scope {
             Some(scope) => {
                 if scope.is_empty() {
                     format!("{}: {}", _type, name)
                 } else {
-                    format!("{}({}): {}", _type, scope, name)
+                    format!("{}({}): {}", _type, scope.trim(), name)
                 }
             }
             None => format!("{}: {}", _type, name),

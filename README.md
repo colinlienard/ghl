@@ -2,11 +2,12 @@
 
 A small CLI to create pull requests linked to Linear in seconds.
 
-> [!NOTE]  
-> This is made to be used at my company and is adapted to our rules.  
-> It is also only compatible with Macos.
+> [!NOTE]
+>
+> - Following the [Conventional Commits](https://www.conventionalcommits.org) specification.
+> - Only compatible with MacOS.
 
-## Install (or update)
+## Install
 
 Run the following:
 
@@ -29,7 +30,7 @@ ghl config
 ### Creating a pull request
 
 ```bash
-ghl create
+ghl pr
 ```
 
 This will ask you the Linear git branch name of an issue, and the name of the pull request that will be created. Then it will:
@@ -39,6 +40,14 @@ This will ask you the Linear git branch name of an issue, and the name of the pu
 3. Push to the remote repository.
 4. Create a pull request.
 5. Assign you the pull request.
+
+### Other commands
+
+| Command         | Description                                 |
+| --------------- | ------------------------------------------- |
+| `commit`, `-c`  | Create a new conventional commit.           |
+| `version`, `-v` | Display the current and the latest version. |
+| `update`, `-up` | Update the binary to the latest version.    |
 
 ## License
 

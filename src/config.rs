@@ -7,6 +7,8 @@ use inquire::{
     Confirm, Editor, InquireError, Select, Text,
 };
 
+use crate::git;
+
 pub struct Config {
     pub pr_name: String,
     pub branch: String,
@@ -46,10 +48,7 @@ impl Config {
     }
 
     pub fn set_default_desc() -> Result<bool, InquireError> {
-        let actual = match Config::get_default_desc() {
-            Ok(desc) => desc,
-            Err(_) => String::new(),
-        };
+        let actual = Config::get_default_desc().unwrap_or_default();
         let desc = Editor::new("Pull request description")
             .with_predefined_text(&actual)
             .with_editor_command(OsStr::new("vim"))
@@ -133,11 +132,14 @@ impl Config {
         Ok((commit_name, _type, name))
     }
 
-    pub fn ask_push() -> Result<(String, String), InquireError> {
+    pub fn ask_push() -> Result<(String, String, String), InquireError> {
         let (commit_name, _type, name) = Config::ask_commit()?;
 
         let branch = &name.replace(' ', "-").replace('\'', "").to_lowercase();
         let branch = format!("{}/{}", _type, branch);
+
+        let repo = git::get_current_repo()?;
+        let gh_compare_url = format!("https://github.com/{}/compare/{}?expand=1", repo, branch);
 
         println!(
             "\
@@ -150,7 +152,7 @@ This will:
         );
         let confirm = Confirm::new("Confirm? (y/n)").prompt();
         match confirm {
-            Ok(true) => Ok((commit_name, branch)),
+            Ok(true) => Ok((commit_name, branch, gh_compare_url)),
             Ok(false) => Err(InquireError::OperationCanceled),
             Err(e) => Err(e),
         }

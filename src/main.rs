@@ -75,7 +75,7 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
 }
 
 fn push_command() -> Result<(), Box<dyn Error>> {
-    let (commit_name, branch) = Config::ask_push()?;
+    let (commit_name, branch, gh_compare_url) = Config::ask_push()?;
 
     git::create_branch(&branch)?;
     println!("{}", "✔ Branch created.".green());
@@ -85,6 +85,8 @@ fn push_command() -> Result<(), Box<dyn Error>> {
 
     git::push(&branch)?;
     println!("{}", "✔ Successfully pushed.".green());
+
+    open::that(gh_compare_url)?;
 
     Ok(())
 }

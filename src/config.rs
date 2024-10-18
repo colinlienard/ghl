@@ -7,6 +7,8 @@ use inquire::{
     Confirm, Editor, InquireError, Select, Text,
 };
 
+use crate::git;
+
 pub struct Config {
     pub pr_name: String,
     pub branch: String,
@@ -46,10 +48,7 @@ impl Config {
     }
 
     pub fn set_default_desc() -> Result<bool, InquireError> {
-        let actual = match Config::get_default_desc() {
-            Ok(desc) => desc,
-            Err(_) => String::new(),
-        };
+        let actual = Config::get_default_desc().unwrap_or_default();
         let desc = Editor::new("Pull request description")
             .with_predefined_text(&actual)
             .with_editor_command(OsStr::new("vim"))
@@ -93,7 +92,7 @@ impl Config {
         Ok(default_desc)
     }
 
-    pub fn ask_commit() -> Result<(String, String), InquireError> {
+    pub fn ask_commit() -> Result<(String, String, String), InquireError> {
         let type_options: Vec<&str> = vec![
             "feat        Add a new feature",
             "fix         Correct a bug or error",
@@ -117,7 +116,7 @@ impl Config {
         let name = Text::new("Name:")
             .with_validators(&[Box::new(get_not_empty_validator())])
             .prompt()?;
-        let name = name.trim();
+        let name = String::from(name.trim());
 
         let commit_name = match scope {
             Some(scope) => {
@@ -130,7 +129,33 @@ impl Config {
             None => format!("{}: {}", _type, name),
         };
 
-        Ok((commit_name, _type))
+        Ok((commit_name, _type, name))
+    }
+
+    pub fn ask_push() -> Result<(String, String, String), InquireError> {
+        let (commit_name, _type, name) = Config::ask_commit()?;
+
+        let branch = &name.replace(' ', "-").replace('\'', "").to_lowercase();
+        let branch = format!("{}/{}", _type, branch);
+
+        let repo = git::get_current_repo()?;
+        let gh_compare_url = format!("https://github.com/{}/compare/{}?expand=1", repo, branch);
+
+        println!(
+            "\
+This will:
+1. Create a branch called {}.
+2. Create a commit called {}.
+3. Push to the remote repository.",
+            branch.bright_cyan(),
+            commit_name.bright_cyan(),
+        );
+        let confirm = Confirm::new("Confirm? (y/n)").prompt();
+        match confirm {
+            Ok(true) => Ok((commit_name, branch, gh_compare_url)),
+            Ok(false) => Err(InquireError::OperationCanceled),
+            Err(e) => Err(e),
+        }
     }
 
     pub fn ask_pr() -> Result<Config, InquireError> {
@@ -138,7 +163,7 @@ impl Config {
             .with_validator(get_not_empty_validator())
             .prompt()?;
 
-        let (mut pr_name, _type) = Config::ask_commit()?;
+        let (mut pr_name, _type, _) = Config::ask_commit()?;
 
         let splited_branch = linear_branch.split('-').collect::<Vec<&str>>();
         if splited_branch.len() > 1 && splited_branch[1].parse::<u32>().is_ok() {
@@ -155,7 +180,7 @@ impl Config {
         Ok(Config { pr_name, branch })
     }
 
-    pub fn confirm(&self) -> Result<bool, InquireError> {
+    pub fn confirm_pr(&self) -> Result<bool, InquireError> {
         println!(
             "\
 This will:

@@ -17,6 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match arg {
         "pr" => pr_command().await?,
+        "push" => push_command()?,
         "commit" | "-c" => commit_command()?,
         "config" => config_command()?,
         "version" | "-v" => version_command().await?,
@@ -35,7 +36,7 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
 
     let config = Config::ask_pr()?;
 
-    match Config::confirm(&config)? {
+    match Config::confirm_pr(&config)? {
         true => {}
         false => {
             return Err("Aborted.".into());
@@ -73,8 +74,23 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn push_command() -> Result<(), Box<dyn Error>> {
+    let (commit_name, branch) = Config::ask_push()?;
+
+    git::create_branch(&branch)?;
+    println!("{}", "✔ Branch created.".green());
+
+    git::create_commit(&commit_name)?;
+    println!("{}", "✔ Commit created.".green());
+
+    git::push(&branch)?;
+    println!("{}", "✔ Successfully pushed.".green());
+
+    Ok(())
+}
+
 fn commit_command() -> Result<(), Box<dyn Error>> {
-    let (commit_name, _) = Config::ask_commit()?;
+    let (commit_name, _, _) = Config::ask_commit()?;
     git::create_commit(&commit_name)?;
     println!("{}", "✔ Commit created.".green());
     Ok(())
@@ -142,6 +158,10 @@ fn help_command() {
     println!("                   3. Push to the remote repository.");
     println!("                   4. Create a new pull request.");
     println!("                   5. Assign you the pull request.");
+    println!("  push           Do the following:");
+    println!("                   1. Create a new branch.");
+    println!("                   2. Create a new commit.");
+    println!("                   3. Push to the remote repository.");
     println!("  commit, -c     Create a new conventional commit.");
     println!("  version, -v    Display the current and the latest version.");
     println!("  update, -up    Update the binary to the latest version.");

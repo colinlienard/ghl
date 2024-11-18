@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match arg {
         "pr" => pr_command().await?,
-        "push" => push_command()?,
+        "init" => init_command()?,
         "commit" | "-c" => commit_command()?,
         "config" => config_command()?,
         "version" | "-v" => version_command().await?,
@@ -74,8 +74,8 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn push_command() -> Result<(), Box<dyn Error>> {
-    let (commit_name, branch, gh_compare_url) = Config::ask_push()?;
+fn init_command() -> Result<(), Box<dyn Error>> {
+    let (commit_name, branch, gh_compare_url) = Config::ask_init()?;
 
     git::create_branch(&branch)?;
     println!("{}", "✔ Branch created.".green());
@@ -160,7 +160,7 @@ fn help_command() {
     println!("                   3. Push to the remote repository.");
     println!("                   4. Create a new pull request.");
     println!("                   5. Assign you the pull request.");
-    println!("  push           Do the following:");
+    println!("  init           Do the following:");
     println!("                   1. Create a new branch.");
     println!("                   2. Create a new commit.");
     println!("                   3. Push to the remote repository.");

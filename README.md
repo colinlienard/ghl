@@ -45,7 +45,7 @@ This will ask you the Linear git branch name of an issue, and the name of the pu
 
 | Command         | Description                                                      |
 | --------------- | ---------------------------------------------------------------- |
-| `push`          | Create a new conventional commit, create a new branch, and push. |
+| `init`          | Create a new conventional commit, create a new branch, and push. |
 | `commit`, `-c`  | Create a new conventional commit.                                |
 | `version`, `-v` | Display the current and the latest version.                      |
 | `update`, `-up` | Update the binary to the latest version.                         |

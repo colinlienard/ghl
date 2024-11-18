@@ -132,7 +132,7 @@ impl Config {
         Ok((commit_name, _type, name))
     }
 
-    pub fn ask_push() -> Result<(String, String, String), InquireError> {
+    pub fn ask_init() -> Result<(String, String, String), InquireError> {
         let (commit_name, _type, name) = Config::ask_commit()?;
 
         let branch = &name.replace(' ', "-").replace('\'', "").to_lowercase();

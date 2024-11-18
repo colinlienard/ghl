@@ -94,17 +94,17 @@ impl Config {
 
     pub fn ask_commit() -> Result<(String, String, String), InquireError> {
         let type_options: Vec<&str> = vec![
-            "feat        Add a new feature",
-            "fix         Correct a bug or error",
-            "change      Change an existing feature",
-            "refactor    Restructure existing code without altering the product behavior",
-            "chore       Routine task, maintenance, or project management that does not directly modify the source code",
-            "test        Add missing tests or correcting existing tests",
-            "docs        Update or create documentation",
-            "ci          Changes related to continuous integration or build environment configuration",
-            "remove      Removal of obsolete or unnecessary code, files, or features",
-            "perf        Improvement of code performance without changing its external behavior",
-            "revert      Complete or partial reversal of a previous commit",
+            "feat        A new feature",
+            "fix         A bug fix",
+            "docs        Documentation only changes",
+            "style       Changes that do not affect the meaning of the code",
+            "refactor    A code change that neither fixes a bug nor adds a feature",
+            "perf        A code change that improves performance",
+            "test        Adding missing tests or correcting existing tests",
+            "build       Changes that affect the build system or external dependencies",
+            "ci          Changes to our CI configuration files and scripts",
+            "chore       Other changes that don't modify src or test files",
+            "revert      Reverts a previous commit",
         ];
 
         let _type = Select::new("Type:", type_options).prompt()?;

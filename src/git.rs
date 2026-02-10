@@ -1,5 +1,5 @@
 use crate::utils::process_command;
-use std::{fs, io::Error, process::Command};
+use std::{io::Error, process::Command};
 
 pub fn create_branch(branch: &str) -> Result<String, Error> {
     process_command(Command::new("git").arg("switch").arg("-c").arg(branch))
@@ -26,22 +26,20 @@ pub fn push(branch: &str) -> Result<String, Error> {
 }
 
 pub fn get_current_repo() -> Result<String, Error> {
-    let git_config = fs::read_to_string(".git/config")?;
-    for line in git_config.lines() {
-        if line.contains("url = ") {
-            let url = line.split("url = ").collect::<Vec<&str>>()[1];
-            let repo = if url.starts_with("https://github.com/") {
-                url.replace("https://github.com/", "").replace(".git", "")
-            } else if url.starts_with("git@github.com:") {
-                url.replace("git@github.com:", "").replace(".git", "")
-            } else {
-                return Err(Error::other("Unsupported repo URL format."));
-            };
-
-            return Ok(repo);
-        }
+    let url = process_command(
+        Command::new("git")
+            .arg("config")
+            .arg("--get")
+            .arg("remote.origin.url"),
+    )?;
+    let url = url.trim();
+    if url.starts_with("https://github.com/") {
+        Ok(url.replace("https://github.com/", "").replace(".git", ""))
+    } else if url.starts_with("git@github.com:") {
+        Ok(url.replace("git@github.com:", "").replace(".git", ""))
+    } else {
+        Err(Error::other("Unsupported repo URL format."))
     }
-    Err(Error::other("Could not find the repository."))
 }
 
 pub fn get_default_branch() -> Result<String, Error> {

@@ -125,7 +125,7 @@ pub async fn get_package_latest_version() -> Result<String, Box<dyn Error>> {
     let json: serde_json::Value = serde_json::from_str(&text)?;
 
     let name = json["name"].as_str().unwrap().to_string();
-    let version = name.split('v').last().unwrap().to_string();
+    let version = name.split('v').next_back().unwrap().to_string();
 
     Ok(version)
 }

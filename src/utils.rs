@@ -1,5 +1,5 @@
 use std::{
-    io::{Error, ErrorKind},
+    io::Error,
     process::{Command, Stdio},
 };
 
@@ -15,9 +15,6 @@ pub fn process_command(command: &mut Command) -> Result<String, Error> {
     if output.status.success() {
         Ok(String::from_utf8(output.stdout).unwrap())
     } else {
-        Err(Error::new(
-            ErrorKind::Other,
-            String::from_utf8(output.stderr).unwrap(),
-        ))
+        Err(Error::other(String::from_utf8(output.stderr).unwrap()))
     }
 }

@@ -60,7 +60,7 @@ async fn pr_command() -> Result<(), Box<dyn Error>> {
 
     let username = gh.get_username().await?;
 
-    let pr_number = pr_url.split('/').last().unwrap();
+    let pr_number = pr_url.split('/').next_back().unwrap();
     gh.assign_to_pr(&username, pr_number).await?;
     println!("{}", "✔ Successfully assigned you.".green());
 

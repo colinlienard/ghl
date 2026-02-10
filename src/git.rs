@@ -1,9 +1,5 @@
 use crate::utils::process_command;
-use std::{
-    fs,
-    io::{Error, ErrorKind},
-    process::Command,
-};
+use std::{fs, io::Error, process::Command};
 
 pub fn create_branch(branch: &str) -> Result<String, Error> {
     process_command(Command::new("git").arg("switch").arg("-c").arg(branch))
@@ -39,19 +35,13 @@ pub fn get_current_repo() -> Result<String, Error> {
             } else if url.starts_with("git@github.com:") {
                 url.replace("git@github.com:", "").replace(".git", "")
             } else {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    "Unsupported repo URL format.".to_string(),
-                ));
+                return Err(Error::other("Unsupported repo URL format."));
             };
 
             return Ok(repo);
         }
     }
-    Err(Error::new(
-        ErrorKind::Other,
-        "Could not find the repository.".to_string(),
-    ))
+    Err(Error::other("Could not find the repository."))
 }
 
 pub fn get_default_branch() -> Result<String, Error> {
@@ -62,8 +52,5 @@ pub fn get_default_branch() -> Result<String, Error> {
             return Ok(branch.to_string());
         }
     }
-    Err(Error::new(
-        ErrorKind::Other,
-        "Could not find the default branch.".to_string(),
-    ))
+    Err(Error::other("Could not find the default branch."))
 }
